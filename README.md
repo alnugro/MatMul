@@ -83,7 +83,7 @@ Run the `MatrixMult` executable with the `--help` flag to see available options 
 3. **Original ScaLP Repository** (Kumm et al.):  
    https://digidev.digi.e-technik.uni-kassel.de/scalp/
 
-4. **MatMul Repository**:  
+4. **University MatMul Repository**:  
    https://gitlab.uni-kassel.de/uk050765/matrixmult
 
 
