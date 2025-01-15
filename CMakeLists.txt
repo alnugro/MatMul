@@ -1,7 +1,12 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.0)
 project(MatrixMult)
 
 set(CMAKE_CXX_STANDARD 17)
+
+# Deactivate C++11-abi?
+if(OLD_CXX_ABI) 
+  add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0) 
+endif()
 
 # find ScaLP
 find_library(SCALP_LIB
@@ -24,9 +29,12 @@ ENDIF (SCALP_LIB AND SCALP_H)
 #add executable for Matrix multiplication
 add_executable(MatrixMult
         src/main.cpp
-        src/ErrorHandler.cpp
+        src/AdditionalFunc.cpp
         src/ScalpHandler.cpp
-        )
+        src/ScalpOutputHandler.cpp include/ScalpOutputHandler.h src/ArgParser.cpp include/ArgParser.h src/ScalpResultValidator.cpp include/ScalpResultValidator.h src/ScalpResultFormulator.cpp include/ScalpResultFormulator.h)
+
+#Link filesystem lib
+target_link_libraries(MatrixMult PRIVATE stdc++fs)
 
 #include header files for Matrix multiplication
 target_include_directories(MatrixMult PRIVATE include)

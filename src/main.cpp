@@ -1,36 +1,88 @@
 #include <iostream>
-#include <ScaLP/Solver.h>
 #include <exception>
-#include "ErrorHandler.h"
+#include "ScaLP/Solver.h"
 #include "ScalpHandler.h"
+#include "ScalpOutputHandler.h"
+#include "ArgParser.h"
+#include "ScalpResultValidator.h"
+#include "ScalpResultFormulator.h"
+
 
 int main(int argc, char** argv) {
 
-    if (argc != 5) { //restrict the input to 4 arguments
-        std::cerr << "Usage: \nUse this format as an argument \"X Y Z N\" for matrix multiplication X.Y x Y.Z. for example \"./MatrixMult 2 2 3 6\" for 2x2 times 2x3 matrices constrained to 6 multiplication\n";
-        return 1; //error code
+
+    try {
+        //Parse the arguments
+        ArgParser Ar(argc,argv);
+
+        //initialize Scalp object
+        ScalpHandler s(Ar.getArg());
+
+
+        //set parameter manually
+        s.setParamList(Ar.getParamList());
+
+        //set variables
+        s.Set_Variables();
+
+        //set constraints
+        s.SetConstraint();
+
+        //run solver
+        s.RunSolver();
+
+
+        //set output handler param
+        ScalpOutputHandler Out(s.getResultValues(),s.getDuration(),s.getPT());
+        Out.setArg(Ar.getArg());
+        Out.setSolverData(s.getSolverData());
+        Out.setParam(Ar.getParamList());
+
+        //if its feasible then validate and formulate the result
+        if(s.solverStat()){
+            //Validate the result
+            ScalpResultValidator validator(s.getResultValues(), s.getPT(), s.getPT_List());
+            validator.setValidatorArg(Ar.getArg());
+            validator.validate();
+
+            //Formulate the result
+            ScalpResultFormulator Formulator(s.getResultValues(), s.getPT());
+            Formulator.setFormulatorArg(Ar.getArg());
+            Formulator.setSABC(s.getSA(),s.getSB(),s.getSC());
+            Formulator.setZABC(s.getZA(),s.getZB(),s.getZC());
+            Formulator.formulateRank1Tensor();
+            Out.setTensorResult(validator.getTensorResult());
+            Out.setFormulation(Formulator.getRank1_U(),Formulator.getRank1_V(),Formulator.getRank1_W(),Formulator.getTotalNumberSum(),Formulator.getMapWforN());
+
+        }
+
+
+        //output the result
+        Out.printResult();
+
+
+    } catch(ScaLP::Exception& e){
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return 2;
+    }
+    catch (std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
+        return 3;
+    }
+    catch (std::domain_error &e) {
+        std::cerr << e.what() << std::endl;
+        return 4;
+    }
+    catch (...) {
+        std::cerr << "Exception MatMul: something is broken" << std::endl;
+        return 5;
     }
 
-    int x = StoiPlusHandler::StringToInt(argv[1]);  //declaring the argument as Matrix size and multiplication count#include <iostream>
-    int y = StoiPlusHandler::StringToInt(argv[2]);
-    int z = StoiPlusHandler::StringToInt(argv[3]);
-    int n = StoiPlusHandler::StringToInt(argv[3]);
-
-    if (x <= 0 || y <= 0 || z <= 0 || n <= 0) {
-        std::cerr << "Error occurred, X Y Z N have to be an int and they also have to be bigger than zero" << std::endl;
-        return 1; //error code
-    }
-    //initialize Scalp
-    s_init::init("gurobi");
-
-
-
-    //ScaLP::newBinaryVariable()
-
-
-    std::cout << "The test works"<<std::endl;
-
-
+    std::cout << "MatMul is finished"<<std::endl;
 
 
     return 0;
